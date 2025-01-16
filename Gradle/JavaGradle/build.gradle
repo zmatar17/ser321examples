@@ -55,7 +55,7 @@ task runFrac(type: JavaExec){
   group 'Fraction Tasks'
   description 'Tasks which runs Fraction with arguments'
 
-  classpath = soruceSets.main.runtimeClasspath
+  classpath = sourceSets.main.runtimeClasspath
   main = 'Fraction'
 
   //default values
