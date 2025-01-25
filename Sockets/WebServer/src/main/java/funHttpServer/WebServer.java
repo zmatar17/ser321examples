@@ -195,48 +195,28 @@ class WebServer {
           }
         } else if (request.contains("multiply?")) {
           try {
-            // Extract query parameters
             Map<String, String> queryPairs = splitQuery(request.replace("multiply?", ""));
 
-            // Validate presence of required parameters
             if (!queryPairs.containsKey("num1") || !queryPairs.containsKey("num2")) {
               builder.append("HTTP/1.1 400 Bad Request\n");
-              builder.append("Content-Type: text/html; charset=utf-8\n");
-              builder.append("\n");
-              builder.append("Error: Missing parameters 'num1' and/or 'num2'.");
+              builder.append("Error: Missing parameters.");
               return;
             }
-
-            // Validate parameters as integers
-            Integer num1, num2;
-            try {
-              num1 = Integer.parseInt(queryPairs.get("num1"));
-              num2 = Integer.parseInt(queryPairs.get("num2"));
-            } catch (NumberFormatException e) {
-              builder.append("HTTP/1.1 406 Not Acceptable\n");
-              builder.append("Content-Type: text/html; charset=utf-8\n");
-              builder.append("\n");
-              builder.append("Error: Both 'num1' and 'num2' must be valid integers.");
-              return;
-            }
-
-            // Perform multiplication
+            Integer num1 = Integer.parseInt(queryPairs.get("num1"));
+            Integer num2 = Integer.parseInt(queryPairs.get("num2"));
             Integer result = num1 * num2;
 
-            // Generate success response
             builder.append("HTTP/1.1 200 OK\n");
-            builder.append("Content-Type: text/html; charset=utf-8\n");
-            builder.append("\n");
             builder.append("Result is: " + result);
+          } catch (NumberFormatException e) {
+            builder.append("HTTP/1.1 406 Not Acceptable\n");
+            builder.append("Error: Invalid parameter format.");
           } catch (Exception e) {
-            // Catch any unexpected errors and prevent the server from crashing
             builder.append("HTTP/1.1 500 Internal Server Error\n");
-            builder.append("Content-Type: text/html; charset=utf-8\n");
-            builder.append("\n");
             builder.append("Error: An unexpected error occurred.");
-            e.printStackTrace(); // Log the error for debugging purposes
           }
         }
+
       } else if (request.contains("github?")) {
           // pulls the query from the request and runs it with GitHub's REST API
           // check out https://docs.github.com/rest/reference/
