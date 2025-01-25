@@ -194,50 +194,44 @@ class WebServer {
             builder.append("File not found: " + file);
           }
         } else if (request.contains("multiply?")) {
-          try {
-            Map<String, String> query_pairs = new LinkedHashMap<String, String>();
-            // Extract path parameters
-            query_pairs = splitQuery(request.replace("multiply?", ""));
+          Map<String, String> query_pairs = new LinkedHashMap<>();
+          query_pairs = splitQuery(request.replace("multiply?", ""));
 
-            // Validate and parse parameters
-            String num1Str = query_pairs.get("num1");
-            String num2Str = query_pairs.get("num2");
+          // Check for missing parameters
+          String num1Str = query_pairs.get("num1");
+          String num2Str = query_pairs.get("num2");
 
-            if (num1Str == null || num2Str == null) {
-              // Missing parameters
-              builder.append("HTTP/1.1 400 Bad Request\n");
-              builder.append("Content-Type: text/html; charset=utf-8\n");
-              builder.append("\n");
-              builder.append("Error: Missing parameters 'num1' or 'num2'. Please provide both parameters.");
-            } else {
-              try {
-                Integer num1 = Integer.parseInt(num1Str);
-                Integer num2 = Integer.parseInt(num2Str);
-
-                // Perform multiplication
-                Integer result = num1 * num2;
-
-                // Generate response
-                builder.append("HTTP/1.1 200 OK\n");
-                builder.append("Content-Type: text/html; charset=utf-8\n");
-                builder.append("\n");
-                builder.append("Result is: " + result);
-              } catch (NumberFormatException e) {
-                // Invalid parameter values
-                builder.append("HTTP/1.1 406 Not Acceptable\n");
-                builder.append("Content-Type: text/html; charset=utf-8\n");
-                builder.append("\n");
-                builder.append("Error: Parameters must be integers.");
-              }
-            }
-          } catch (Exception e) {
-            // Catch unexpected errors
-            builder.append("HTTP/1.1 500 Internal Server Error\n");
+          if (num1Str == null || num2Str == null) {
+            // Generate error response
+            builder.append("HTTP/1.1 400 Bad Request\n");
             builder.append("Content-Type: text/html; charset=utf-8\n");
             builder.append("\n");
-            builder.append("Error: An unexpected error occurred. Please try again.");
+            builder.append("Error: Missing parameters 'num1' or 'num2'. Please provide both parameters.");
+            return builder.toString();
           }
-        } else if (request.contains("github?")) {
+
+          try {
+            // Parse the parameters
+            Integer num1 = Integer.parseInt(num1Str);
+            Integer num2 = Integer.parseInt(num2Str);
+
+            // Perform multiplication
+            Integer result = num1 * num2;
+
+            // Generate success response
+            builder.append("HTTP/1.1 200 OK\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Result is: " + result);
+          } catch (NumberFormatException e) {
+            // Handle invalid input
+            builder.append("HTTP/1.1 406 Not Acceptable\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: Parameters must be integers.");
+          }
+        }
+      } else if (request.contains("github?")) {
           // pulls the query from the request and runs it with GitHub's REST API
           // check out https://docs.github.com/rest/reference/
           //
