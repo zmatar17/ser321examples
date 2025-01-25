@@ -194,49 +194,49 @@ class WebServer {
             builder.append("File not found: " + file);
           }
         } else if (request.contains("multiply?")) {
-          Map<String, String> query_pairs = new LinkedHashMap<>();
-          query_pairs = splitQuery(request.replace("multiply?", ""));
-          try{
-            if(!query_pairs.containsKey("num1") || !query_pairs.containsKey("num2")){
-              throw new IllegalArgumentException("Missing paramets: 'num1' and 'num2' are required.");
-            }
-            Integer num1 = Integer.parseInt(query_pairs.get("num1"));
-            Integer num2 = Integer.parseInt(query_pairs.get("num2"));
+          try {
+            // Extract query parameters
+            Map<String, String> queryPairs = splitQuery(request.replace("multiply?", ""));
 
+            // Validate presence of required parameters
+            if (!queryPairs.containsKey("num1") || !queryPairs.containsKey("num2")) {
+              builder.append("HTTP/1.1 400 Bad Request\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Error: Missing parameters 'num1' and/or 'num2'.");
+              return;
+            }
+
+            // Validate parameters as integers
+            Integer num1, num2;
+            try {
+              num1 = Integer.parseInt(queryPairs.get("num1"));
+              num2 = Integer.parseInt(queryPairs.get("num2"));
+            } catch (NumberFormatException e) {
+              builder.append("HTTP/1.1 406 Not Acceptable\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Error: Both 'num1' and 'num2' must be valid integers.");
+              return;
+            }
+
+            // Perform multiplication
             Integer result = num1 * num2;
 
+            // Generate success response
             builder.append("HTTP/1.1 200 OK\n");
             builder.append("Content-Type: text/html; charset=utf-8\n");
             builder.append("\n");
-            builder.append("<html><body>");
-            builder.append("<h1>Multiplication Result</h1>");
-            builder.append("<p>").append(num1).append(" * ").append(num2).append(" = ").append(result).append("</p>");
-            builder.append("</body></html>");
-          }catch(NumberFormatException e){
-            builder.append("HTTP/1.1 406 Not Acceptable\n");
-            builder.append("Content-Type: text/html; charset=utf-8\n");
-            builder.append("\n");
-            builder.append("<html><body>");
-            builder.append("<h1>406 Not Acceptable</h1>");
-            builder.append("<p>Error: Both 'num1' and 'num2' must be valid integers.</p>");
-            builder.append("</body></html>");
-          }catch(IllegalArgumentException e){
-            builder.append("HTTP/1.1 400 Bad Request\n");
-            builder.append("Content-Type: text/html; charset=utf-8\n");
-            builder.append("\n");
-            builder.append("<html><body>");
-            builder.append("<h1>400 Bad Request</h1>");
-            builder.append("<p>").append(e.getMessage()).append("</p>");
-            builder.append("</body></html>");
-          }catch(Exception e){
+            builder.append("Result is: " + result);
+          } catch (Exception e) {
+            // Catch any unexpected errors and prevent the server from crashing
             builder.append("HTTP/1.1 500 Internal Server Error\n");
             builder.append("Content-Type: text/html; charset=utf-8\n");
             builder.append("\n");
-            builder.append("<html><body>");
-            builder.append("<h1>500 Internal Server Error</h1>");
-            builder.append("<p>An unexpected error occured. Please try again later.</p>");
-            builder.append("</body></html>");
+            builder.append("Error: An unexpected error occurred.");
+            e.printStackTrace(); // Log the error for debugging purposes
           }
+        }
       } else if (request.contains("github?")) {
           // pulls the query from the request and runs it with GitHub's REST API
           // check out https://docs.github.com/rest/reference/
