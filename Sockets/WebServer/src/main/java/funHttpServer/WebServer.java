@@ -274,6 +274,68 @@ class WebServer {
               }
             }
           }
+        }else if (request.contains("convert?")) {
+          Map<String, String> query_pairs = splitQuery(request.replace("convert?", ""));
+
+          // Check if both parameters are present
+          if (!query_pairs.containsKey("temp") || !query_pairs.containsKey("unit")) {
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: Missing parameters 'temp' or 'unit'. Both parameters are required.");
+          } else {
+            try {
+              double temp = Double.parseDouble(query_pairs.get("temp"));
+              String unit = query_pairs.get("unit").toUpperCase();
+              double convertedTemp;
+
+              if (unit.equals("C")) {
+                convertedTemp = (temp * 9/5) + 32; // Celsius to Fahrenheit
+                builder.append("HTTP/1.1 200 OK\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n");
+                builder.append("\n");
+                builder.append(temp + "°C is " + convertedTemp + "°F");
+              } else if (unit.equals("F")) {
+                convertedTemp = (temp - 32) * 5/9; // Fahrenheit to Celsius
+                builder.append("HTTP/1.1 200 OK\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n");
+                builder.append("\n");
+                builder.append(temp + "°F is " + convertedTemp + "°C");
+              } else {
+                builder.append("HTTP/1.1 400 Bad Request\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n");
+                builder.append("\n");
+                builder.append("Error: Unit must be 'C' for Celsius or 'F' for Fahrenheit.");
+              }
+            } catch (NumberFormatException e) {
+              builder.append("HTTP/1.1 400 Bad Request\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Error: Temperature must be a valid number.");
+            }
+          }
+        }else if (request.contains("wordcount?")) {
+          Map<String, String> query_pairs = splitQuery(request.replace("wordcount?", ""));
+
+          // Check if the 'text' parameter is present
+          if (!query_pairs.containsKey("text")) {
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: Missing 'text' parameter.");
+          } else {
+            String text = query_pairs.get("text");
+
+            // Count words by splitting the text on whitespace
+            String[] words = text.trim().split("\\s+");
+            int wordCount = words.length;
+
+            // Generate response
+            builder.append("HTTP/1.1 200 OK\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Word Count: " + wordCount);
+          }
         }
         return response;
   }catch (IOException e) {
