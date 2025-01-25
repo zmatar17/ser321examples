@@ -196,41 +196,47 @@ class WebServer {
         } else if (request.contains("multiply?")) {
           Map<String, String> query_pairs = new LinkedHashMap<>();
           query_pairs = splitQuery(request.replace("multiply?", ""));
+          try{
+            if(!query_pairs.containsKey("num1") || !query_pairs.containsKey("num2")){
+              throw new IllegalArgumentException("Missing paramets: 'num1' and 'num2' are required.");
+            }
+            Integer num1 = Integer.parseInt(query_pairs.get("num1"));
+            Integer num2 = Integer.parseInt(query_pairs.get("num2"));
 
-          // Check for missing parameters
-          String num1Str = query_pairs.get("num1");
-          String num2Str = query_pairs.get("num2");
-
-          if (num1Str == null || num2Str == null) {
-            // Generate error response
-            builder.append("HTTP/1.1 400 Bad Request\n");
-            builder.append("Content-Type: text/html; charset=utf-8\n");
-            builder.append("\n");
-            builder.append("Error: Missing parameters 'num1' or 'num2'. Please provide both parameters.");
-            return builder.toString();
-          }
-
-          try {
-            // Parse the parameters
-            Integer num1 = Integer.parseInt(num1Str);
-            Integer num2 = Integer.parseInt(num2Str);
-
-            // Perform multiplication
             Integer result = num1 * num2;
 
-            // Generate success response
             builder.append("HTTP/1.1 200 OK\n");
             builder.append("Content-Type: text/html; charset=utf-8\n");
             builder.append("\n");
-            builder.append("Result is: " + result);
-          } catch (NumberFormatException e) {
-            // Handle invalid input
+            builder.append("<html><body>");
+            builder.append("<h1>Multiplication Result</h1>");
+            builder.append("<p>").append(num1).append(" * ").append(num2).append(" = ").append(result).append("</p>");
+            builder.append("</body></html>");
+          }catch(NumberFormatException e){
             builder.append("HTTP/1.1 406 Not Acceptable\n");
             builder.append("Content-Type: text/html; charset=utf-8\n");
             builder.append("\n");
-            builder.append("Error: Parameters must be integers.");
+            builder.append("<html><body>");
+            builder.append("<h1>406 Not Acceptable</h1>");
+            builder.append("<p>Error: Both 'num1' and 'num2' must be valid integers.</p>");
+            builder.append("</body></html>");
+          }catch(IllegalArgumentException e){
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("<html><body>");
+            builder.append("<h1>400 Bad Request</h1>");
+            builder.append("<p>").append(e.getMessage()).append("</p>");
+            builder.append("</body></html>");
+          }catch(Exception e){
+            builder.append("HTTP/1.1 500 Internal Server Error\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("<html><body>");
+            builder.append("<h1>500 Internal Server Error</h1>");
+            builder.append("<p>An unexpected error occured. Please try again later.</p>");
+            builder.append("</body></html>");
           }
-        }
       } else if (request.contains("github?")) {
           // pulls the query from the request and runs it with GitHub's REST API
           // check out https://docs.github.com/rest/reference/
@@ -251,10 +257,14 @@ class WebServer {
           builder.append("Check the todos mentioned in the Java source file");
           // TODO: Parse the JSON returned by your fetch and create an appropriate
           // response based on what the assignment document asks for
-
+        String query = query_pairs.get("query");
+        if(query == null || query.isEmpty()){
+          builder.append("HTTP/1.1 400 Bad Request\n");
+          builder.append("Content-Type: text/html; charset=utf-8\n");
+          builder.append("\n");
+          builder.append("Error: Missing 'query' parameter. Please provid a valid GitHub API query.");
         } else {
           // if the request is not recognized at all
-
           builder.append("HTTP/1.1 400 Bad Request\n");
           builder.append("Content-Type: text/html; charset=utf-8\n");
           builder.append("\n");
