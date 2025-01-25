@@ -223,6 +223,7 @@ class WebServer {
       } else if(request.contains("github?")) {
           Map<String, String> query_pairs = splitQuery(request.replace("github?", ""));
 
+          // Check if the 'query' parameter is present
           if (!query_pairs.containsKey("query")) {
             builder.append("HTTP/1.1 400 Bad Request\n");
             builder.append("Content-Type: text/html; charset=utf-8\n");
@@ -231,23 +232,50 @@ class WebServer {
           } else {
             String json = fetchURL("https://api.github.com/" + query_pairs.get("query"));
 
+            // Check if the response is empty or null
             if (json == null || json.isEmpty()) {
               builder.append("HTTP/1.1 404 Not Found\n");
               builder.append("Content-Type: text/html; charset=utf-8\n");
               builder.append("\n");
               builder.append("Error: No data found for the given query.");
             } else {
-              // Here you can parse the JSON and create a more structured response
-              // For now, just return the raw JSON
-              builder.append("HTTP/1.1 200 OK\n");
-              builder.append("Content-Type: application/json; charset=utf-8\n");
-              builder.append("\n");
-              builder.append(json);
+              try {
+                // Parse the JSON response
+                JSONArray repos = new JSONArray(json);
+                StringBuilder responseBuilder = new StringBuilder();
+                responseBuilder.append("<html><body><h1>Repositories</h1><ul>");
+
+                for (int i = 0; i < repos.length(); i++) {
+                  JSONObject repo = repos.getJSONObject(i);
+                  String fullName = repo.getString("full_name");
+                  String id = repo.getString("id");
+                  String ownerLogin = repo.getJSONObject("owner").getString("login");
+
+                  // Append the repository information to the response
+                  responseBuilder.append("<li>");
+                  responseBuilder.append("Full Name: ").append(fullName).append(", ");
+                  responseBuilder.append("ID: ").append(id).append(", ");
+                  responseBuilder.append("Owner Login: ").append(ownerLogin);
+                  responseBuilder.append("</li>");
+                }
+
+                responseBuilder.append("</ul></body></html>");
+
+                // Generate response
+                builder.append("HTTP/1.1 200 OK\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n");
+                builder.append("\n");
+                builder.append(responseBuilder.toString());
+              } catch (JSONException e) {
+                builder.append("HTTP/1.1 500 Internal Server Error\n");
+                builder.append("Content-Type: text/html; charset=utf-8\n");
+                builder.append("\n");
+                builder.append("Error: Failed to parse JSON response.");
+              }
             }
           }
-      }
-    }
-    return response;
+        }
+        return response;
   }catch (IOException e) {
       e.printStackTrace();
       response = ("<html>ERROR: " + e.getMessage() + "</html>").getBytes();
