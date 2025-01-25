@@ -110,7 +110,7 @@ class WebServer {
         // find end of header("\n\n")
         if (line == null || line.equals(""))
           done = true;
-        // parse GET format ("GET <path> HTTP/1.1")
+          // parse GET format ("GET <path> HTTP/1.1")
         else if (line.startsWith("GET")) {
           int firstSpace = line.indexOf(" ");
           int secondSpace = line.indexOf(" ", firstSpace + 1);
@@ -340,10 +340,11 @@ class WebServer {
         }
         return response;
       }
-  }catch (IOException e) {
+    } catch (IOException e) {
       e.printStackTrace();
       response = ("<html>ERROR: " + e.getMessage() + "</html>").getBytes();
     }
+  }
 
   /**
    * Method to read in a query and split it up correctly
@@ -352,19 +353,15 @@ class WebServer {
    * @throws UnsupportedEncodingException If the URLs aren't encoded with UTF-8
    */
   public static Map<String, String> splitQuery(String query) throws UnsupportedEncodingException {
-    Map<String, String> query_pairs = new LinkedHashMap<String, String>();
-    // "q=hello+world%2Fme&bob=5"
-    String[] pairs = query.split("&");
-    // ["q=hello+world%2Fme", "bob=5"]
-    for (String pair : pairs) {
-      int idx = pair.indexOf("=");
-      query_pairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"),
-          URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+      Map<String, String> query_pairs = new LinkedHashMap<>();
+      String[] pairs = query.split("&");
+      for (String pair : pairs) {
+        int idx = pair.indexOf("=");
+        query_pairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"),
+                URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+      }
+      return query_pairs;
     }
-    // {{"q", "hello world/me"}, {"bob","5"}}
-    return query_pairs;
-  }
-
   /**
    * Builds an HTML file list from the www directory
    * @return HTML string output of file list
