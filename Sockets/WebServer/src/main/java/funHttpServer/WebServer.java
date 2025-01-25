@@ -220,7 +220,7 @@ class WebServer {
               builder.append("Error: Parameters must be valid integers.");
             }
           }
-      } else if(request.contains("github?")) {
+        } else if (request.contains("github?")) {
           Map<String, String> query_pairs = splitQuery(request.replace("github?", ""));
 
           // Check if the 'query' parameter is present
@@ -274,7 +274,7 @@ class WebServer {
               }
             }
           }
-        }else if (request.contains("convert?")) {
+        } else if (request.contains("convert?")) {
           Map<String, String> query_pairs = splitQuery(request.replace("convert?", ""));
 
           // Check if both parameters are present
@@ -290,13 +290,13 @@ class WebServer {
               double convertedTemp;
 
               if (unit.equals("C")) {
-                convertedTemp = (temp * 9/5) + 32; // Celsius to Fahrenheit
+                convertedTemp = (temp * 9 / 5) + 32; // Celsius to Fahrenheit
                 builder.append("HTTP/1.1 200 OK\n");
                 builder.append("Content-Type: text/html; charset=utf-8\n");
                 builder.append("\n");
                 builder.append(temp + "°C is " + convertedTemp + "°F");
               } else if (unit.equals("F")) {
-                convertedTemp = (temp - 32) * 5/9; // Fahrenheit to Celsius
+                convertedTemp = (temp - 32) * 5 / 9; // Fahrenheit to Celsius
                 builder.append("HTTP/1.1 200 OK\n");
                 builder.append("Content-Type: text/html; charset=utf-8\n");
                 builder.append("\n");
@@ -314,30 +314,32 @@ class WebServer {
               builder.append("Error: Temperature must be a valid number.");
             }
           }
-        }else if (request.contains("wordcount?")) {
-          Map<String, String> query_pairs = splitQuery(request.replace("wordcount?", ""));
+        } else if (request.contains("replace?")) {
+          Map<String, String> query_pairs = splitQuery(request.replace("replace?", ""));
 
-          // Check if the 'text' parameter is present
-          if (!query_pairs.containsKey("text")) {
+          // Check if the required parameters are present
+          if (!query_pairs.containsKey("text") || !query_pairs.containsKey("target") || !query_pairs.containsKey("replacement")) {
             builder.append("HTTP/1.1 400 Bad Request\n");
             builder.append("Content-Type: text/html; charset=utf-8\n");
             builder.append("\n");
-            builder.append("Error: Missing 'text' parameter.");
+            builder.append("Error: Missing 'text', 'target', or 'replacement' parameter.");
           } else {
             String text = query_pairs.get("text");
+            String target = query_pairs.get("target");
+            String replacement = query_pairs.get("replacement");
 
-            // Count words by splitting the text on whitespace
-            String[] words = text.trim().split("\\s+");
-            int wordCount = words.length;
+            // Perform the replacement
+            String result = text.replace(target, replacement);
 
             // Generate response
             builder.append("HTTP/1.1 200 OK\n");
             builder.append("Content-Type: text/html; charset=utf-8\n");
             builder.append("\n");
-            builder.append("Word Count: " + wordCount);
+            builder.append("Result: " + result);
           }
         }
         return response;
+      }
   }catch (IOException e) {
       e.printStackTrace();
       response = ("<html>ERROR: " + e.getMessage() + "</html>").getBytes();
