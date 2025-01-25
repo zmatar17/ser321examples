@@ -194,95 +194,64 @@ class WebServer {
             builder.append("File not found: " + file);
           }
         } else if (request.contains("multiply?")) {
-          try {
-            // Extract query parameters from the request
-            Map<String, String> queryPairs = splitQuery(request.replace("multiply?", ""));
+          Map<String, String> query_pairs = splitQuery(request.replace("multiply?", ""));
 
-            // Check if the required parameters are present
-            if (!queryPairs.containsKey("num1") || !queryPairs.containsKey("num2")) {
-              builder.append("HTTP/1.1 400 Bad Request\n");
+          // Check if both parameters are present
+          if (!query_pairs.containsKey("num1") || !query_pairs.containsKey("num2")) {
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: Missing parameters 'num1' or 'num2'.");
+          } else {
+            try {
+              Integer num1 = Integer.parseInt(query_pairs.get("num1"));
+              Integer num2 = Integer.parseInt(query_pairs.get("num2"));
+              Integer result = num1 * num2;
+
+              // Generate response
+              builder.append("HTTP/1.1 200 OK\n");
               builder.append("Content-Type: text/html; charset=utf-8\n");
               builder.append("\n");
-              builder.append("<h1>Error: Missing parameters</h1>");
-              builder.append("<p>Please provide both 'num1' and 'num2' as query parameters.</p>");
-              return;
+              builder.append("Result is: " + result);
+            } catch (NumberFormatException e) {
+              builder.append("HTTP/1.1 406 Bad Request\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Error: Parameters must be valid integers.");
             }
-
-            // Parse parameters and calculate the result
-            Integer num1 = Integer.parseInt(queryPairs.get("num1"));
-            Integer num2 = Integer.parseInt(queryPairs.get("num2"));
-            Integer result = num1 * num2;
-
-            // Return the result
-            builder.append("HTTP/1.1 200 OK\n");
-            builder.append("Content-Type: text/html; charset=utf-8\n");
-            builder.append("\n");
-            builder.append("<h1>Multiplication Result</h1>");
-            builder.append("<p>The result of " + num1 + " x " + num2 + " is: " + result + "</p>");
-          } catch (NumberFormatException e) {
-            // Handle invalid parameter format (e.g., not a number)
-            builder.append("HTTP/1.1 406 Not Acceptable\n");
-            builder.append("Content-Type: text/html; charset=utf-8\n");
-            builder.append("\n");
-            builder.append("<h1>Error: Invalid input</h1>");
-            builder.append("<p>One or both parameters ('num1' or 'num2') are not valid numbers.</p>");
-          } catch (Exception e) {
-            // Handle any other unexpected errors
-            builder.append("HTTP/1.1 500 Internal Server Error\n");
-            builder.append("Content-Type: text/html; charset=utf-8\n");
-            builder.append("\n");
-            builder.append("<h1>Unexpected Error</h1>");
-            builder.append("<p>Something went wrong. Please try again later.</p>");
-
-            // Optionally, log the error for debugging
-            e.printStackTrace();
           }
-        }
+      } else if(request.contains("github?")) {
+          Map<String, String> query_pairs = splitQuery(request.replace("github?", ""));
 
-      } else if (request.contains("github?")) {
-          // pulls the query from the request and runs it with GitHub's REST API
-          // check out https://docs.github.com/rest/reference/
-          //
-          // HINT: REST is organized by nesting topics. Figure out the biggest one first,
-          //     then drill down to what you care about
-          // "Owner's repo is named RepoName. Example: find RepoName's contributors" translates to
-          //     "/repos/OWNERNAME/REPONAME/contributors"
+          if (!query_pairs.containsKey("query")) {
+            builder.append("HTTP/1.1 400 Bad Request\n");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("Error: Missing 'query' parameter.");
+          } else {
+            String json = fetchURL("https://api.github.com/" + query_pairs.get("query"));
 
-          Map<String, String> query_pairs = new LinkedHashMap<String, String>();
-          query_pairs = splitQuery(request.replace("github?", ""));
-          String json = fetchURL("https://api.github.com/" + query_pairs.get("query"));
-          System.out.println(json);
-
-          builder.append("HTTP/1.1 200 OK\n");
-          builder.append("Content-Type: text/html; charset=utf-8\n");
-          builder.append("\n");
-          builder.append("Check the todos mentioned in the Java source file");
-          // TODO: Parse the JSON returned by your fetch and create an appropriate
-          // response based on what the assignment document asks for
-        String query = query_pairs.get("query");
-        if(query == null || query.isEmpty()){
-          builder.append("HTTP/1.1 400 Bad Request\n");
-          builder.append("Content-Type: text/html; charset=utf-8\n");
-          builder.append("\n");
-          builder.append("Error: Missing 'query' parameter. Please provid a valid GitHub API query.");
-        } else {
-          // if the request is not recognized at all
-          builder.append("HTTP/1.1 400 Bad Request\n");
-          builder.append("Content-Type: text/html; charset=utf-8\n");
-          builder.append("\n");
-          builder.append("I am not sure what you want me to do...");
-        }
-
-        // Output
-        response = builder.toString().getBytes();
+            if (json == null || json.isEmpty()) {
+              builder.append("HTTP/1.1 404 Not Found\n");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("Error: No data found for the given query.");
+            } else {
+              // Here you can parse the JSON and create a more structured response
+              // For now, just return the raw JSON
+              builder.append("HTTP/1.1 200 OK\n");
+              builder.append("Content-Type: application/json; charset=utf-8\n");
+              builder.append("\n");
+              builder.append(json);
+            }
+          }
       }
-    } catch (IOException e) {
+    }
+    return response;
+  }catch (IOException e) {
       e.printStackTrace();
       response = ("<html>ERROR: " + e.getMessage() + "</html>").getBytes();
     }
-
-    return response;
-  }
 
   /**
    * Method to read in a query and split it up correctly
