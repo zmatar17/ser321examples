@@ -195,25 +195,47 @@ class WebServer {
           }
         } else if (request.contains("multiply?")) {
           try {
+            // Extract query parameters from the request
             Map<String, String> queryPairs = splitQuery(request.replace("multiply?", ""));
 
+            // Check if the required parameters are present
             if (!queryPairs.containsKey("num1") || !queryPairs.containsKey("num2")) {
               builder.append("HTTP/1.1 400 Bad Request\n");
-              builder.append("Error: Missing parameters.");
+              builder.append("Content-Type: text/html; charset=utf-8\n");
+              builder.append("\n");
+              builder.append("<h1>Error: Missing parameters</h1>");
+              builder.append("<p>Please provide both 'num1' and 'num2' as query parameters.</p>");
               return;
             }
+
+            // Parse parameters and calculate the result
             Integer num1 = Integer.parseInt(queryPairs.get("num1"));
             Integer num2 = Integer.parseInt(queryPairs.get("num2"));
             Integer result = num1 * num2;
 
+            // Return the result
             builder.append("HTTP/1.1 200 OK\n");
-            builder.append("Result is: " + result);
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("<h1>Multiplication Result</h1>");
+            builder.append("<p>The result of " + num1 + " x " + num2 + " is: " + result + "</p>");
           } catch (NumberFormatException e) {
+            // Handle invalid parameter format (e.g., not a number)
             builder.append("HTTP/1.1 406 Not Acceptable\n");
-            builder.append("Error: Invalid parameter format.");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("<h1>Error: Invalid input</h1>");
+            builder.append("<p>One or both parameters ('num1' or 'num2') are not valid numbers.</p>");
           } catch (Exception e) {
+            // Handle any other unexpected errors
             builder.append("HTTP/1.1 500 Internal Server Error\n");
-            builder.append("Error: An unexpected error occurred.");
+            builder.append("Content-Type: text/html; charset=utf-8\n");
+            builder.append("\n");
+            builder.append("<h1>Unexpected Error</h1>");
+            builder.append("<p>Something went wrong. Please try again later.</p>");
+
+            // Optionally, log the error for debugging
+            e.printStackTrace();
           }
         }
 
